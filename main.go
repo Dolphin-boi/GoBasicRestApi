@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -31,7 +30,7 @@ type Data struct {
 func main() {
 
 	err := godotenv.Load()
-	if errors.Is(err, fs.ErrExist) {
+	if err != nil {
 		log.Fatal("Error loading env file")
 	}
 
@@ -44,7 +43,7 @@ func main() {
 	dsn := dbUserName + ":" + dbPassword + "@tcp(" + dbHost + ":" + dbPort + ")/" + dbName + "?parseTime=true"
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if errors.Is(err, fs.ErrExist) {
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -55,7 +54,7 @@ func main() {
 	app.GET("/users", func(c *gin.Context) {
 		var user User
 		result := db.First(&user)
-		if errors.Is(result.Error, fs.ErrExist) {
+		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			return
 		}
@@ -66,8 +65,8 @@ func main() {
 		username := c.Param("username")
 		var user User
 		result := db.Where("user_name = ?", username).First(&user)
-		if errors.Is(result.Error, fs.ErrExist) {
-			if result.Error == gorm.ErrRecordNotFound {
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"status": "User not exist"})
 				return
 			} else {
@@ -85,18 +84,18 @@ func main() {
 	app.POST("/users", func(c *gin.Context) {
 
 		var data Data
-		if err := c.ShouldBindJSON(&data); errors.Is(err, fs.ErrExist) {
+		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		var user User
 		result := db.Where("user_name = ?", data.Username).First(&user)
-		if errors.Is(result.Error, fs.ErrExist) {
-			if result.Error == gorm.ErrRecordNotFound {
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				user = User{UserName: data.Username, Email: data.Email, Fname: data.Fname, Lname: data.Lname}
 				result = db.Create(&user)
-				if errors.Is(result.Error, fs.ErrExist) {
+				if result.Error != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 					return
 				}
@@ -114,15 +113,15 @@ func main() {
 
 		username := c.Param("username")
 		var data Data
-		if err := c.ShouldBindJSON(&data); errors.Is(err, fs.ErrExist) {
+		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		var user User
 		result := db.Where("user_name = ?", username).First(&user)
-		if errors.Is(result.Error, fs.ErrExist) {
-			if result.Error == gorm.ErrRecordNotFound {
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"status": "User not exist"})
 				return
 			} else {
@@ -132,7 +131,7 @@ func main() {
 		}
 		user = User{UserName: username, Email: data.Email, Fname: data.Fname, Lname: data.Lname}
 		result = db.Where("user_name = ?", user.UserName).Updates(User(user))
-		if errors.Is(result.Error, fs.ErrExist) {
+		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			return
 		}
@@ -149,8 +148,8 @@ func main() {
 
 		var user User
 		result := db.Where("user_name = ?", username).First(&user)
-		if errors.Is(result.Error, fs.ErrExist) {
-			if result.Error == gorm.ErrRecordNotFound {
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"status": "User not exist"})
 				return
 			} else {
@@ -160,7 +159,7 @@ func main() {
 		}
 
 		result = db.Where("user_name = ?", username).Delete(&user)
-		if errors.Is(result.Error, fs.ErrExist) {
+		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			return
 		}
