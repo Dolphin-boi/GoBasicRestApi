@@ -19,6 +19,13 @@ type User struct {
 	Lname    string
 }
 
+type Data struct {
+	Username string `json: "username"`
+	Email    string `json: "email" binding require`
+	Fname    string `json: "fname" binding require`
+	Lname    string `json: "lname" binding require`
+}
+
 func main() {
 
 	err := godotenv.Load()
@@ -74,13 +81,8 @@ func main() {
 	})
 
 	app.POST("/users", func(c *gin.Context) {
-		var data struct {
-			Username string `json: "username" binding require`
-			Email    string `json: "email" binding require`
-			Fname    string `json: "fname" binding require`
-			Lname    string `json: "lname" binding require`
-		}
 
+		var data Data
 		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -109,12 +111,7 @@ func main() {
 	app.PUT("/users/:username", func(c *gin.Context) {
 
 		username := c.Param("username")
-		var data struct {
-			Email string `json: "email" binding require`
-			Fname string `json: "fname" binding require`
-			Lname string `json: "lname" binding require`
-		}
-
+		var data Data
 		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -169,5 +166,4 @@ func main() {
 	})
 
 	app.Run(":8000")
-
 }
